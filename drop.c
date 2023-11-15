@@ -7,6 +7,7 @@
 #include <X11/keysym.h>
 
 #define XDND_PROTOCOL_VERSION 5
+#define BUFFER_SIZE 1024
 
 struct {
     Display *dpy;
@@ -68,7 +69,7 @@ is_target_xdnd_aware() {
     unsigned char* data = NULL;
     
     XGetWindowProperty(source.dpy, source.target_info.target, source.atom.xdnd_aware,
-            0, 1024, False, AnyPropertyType, &actual, &dformat, &dcount, &dremaining, &data);
+            0, BUFFER_SIZE, False, AnyPropertyType, &actual, &dformat, &dcount, &dremaining, &data);
 
     return (actual != None && data[0] <= XDND_PROTOCOL_VERSION);
 }
@@ -82,8 +83,8 @@ send_selection_notify(XSelectionRequestEvent *xselectionrequest) {
 
     char *property_data = calloc(property_data_size, 1);
     for(int i=0;i<source.file_paths_size;i++) {
-        char *path = NULL;
-        asprintf(&path, "file://%s\r\n", source.file_paths[i]);
+        char path[BUFFER_SIZE];
+        snprintf(path, BUFFER_SIZE, "file://%s\r\n", source.file_paths[i]);
         strcat(property_data, path);
     }
     strcat(property_data, "\0");
