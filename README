@@ -11,6 +11,9 @@ Unix-like systems. It takes a list of filenames as arguments and allows you to
 drop them onto any application that supports XDND, without requiring you to physically
 drag the files.
 
+To install or remove drop use the provided Makefile. Simply run a "make install" which
+will install to /usr/local/bin (by default). To uninstall run "make uninstall".
+
 Usage: just type "drop filename ..." followed by the names of the files you want to drop.
 You can also use globbing patterns like "~/Downloads/*.jpg". After pressing Enter,
 you can navigate to the destination window and click where you want to drop the files.
