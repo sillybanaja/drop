@@ -1,0 +1,23 @@
+drag-and-drop file(s) from your terminal without a gui or draging.
+
+I wanted a simple way to drag files from the terminal into windows that force
+drag-and-drop without having to open a file browser or interact with a GUI.
+Existing solutions like Dragon by mwh are "bloated" (written in GTK) for what I
+need, plus required me to physically drag the files to the target application with
+a gui which is not needed for my workflow.
+
+I wrote drop in C using Xlib, which is lightweight and widely available on
+Unix-like systems. It takes a list of filenames as arguments and allows you to
+drop them onto any application that supports XDND, without requiring you to physically
+drag the files.
+
+Usage: just type "drop filename ..." followed by the names of the files you want to drop.
+You can also use globbing patterns like "~/Downloads/*.jpg". After pressing Enter,
+you can navigate to the destination window and click where you want to drop the files.
+Press Escape at any time to close the program.
+
+Note that this implementation is a little crude, but it should work with most
+applications that support drag-and-drop (XDND).
+
+Pull requests and bug reports are welcome on gitlab. Please keep in mind that this
+project is intended to remain small and focused on its core functionality. 
