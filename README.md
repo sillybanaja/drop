@@ -23,5 +23,5 @@ Press Escape at any time to close the program.
 Note that this implementation is a little crude, but it should work with most
 applications that support drag-and-drop (XDND).
 
-Pull requests and bug reports are welcome on gitlab. Please keep in mind that this
-project is intended to remain small and focused on its core functionality. 
+Pull requests and bug reports are welcome. Please keep in mind that this project
+is intended to remain small and focused on its core functionality. 
