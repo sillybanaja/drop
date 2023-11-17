@@ -1,4 +1,4 @@
-[dropshowcase.webm](https://github.com/sillybanaja/drop/assets/132526605/00559f69-0b2a-42c1-9b6b-f4cc1b2d84b6)
+[dropshowcase.webm](https://github.com/sillybanaja/drop/assets/132526605/8e33ac5a-49c5-4fcf-a57f-e8bc4c1527b8)
 
 ---
 I wanted a simple way to drag files from the terminal into windows that force
