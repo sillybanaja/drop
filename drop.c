@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+#include <X11/cursorfont.h>
 
 #define XDND_PROTOCOL_VERSION 5
 #define BUFFER_SIZE 1024
@@ -144,6 +145,13 @@ main(int argc, char* argv[]) {
     source.atom.xdnd_action_copy = XInternAtom(source.dpy, "XdndActionCopy", False);
     source.atom.data_type = XInternAtom(source.dpy, "text/uri-list", False);
 
+    Cursor cursor = XCreateFontCursor(source.dpy, XC_X_cursor);
+    if ((XGrabPointer
+        (source.dpy, source.root, False,
+         ButtonMotionMask | ButtonPressMask | ButtonReleaseMask, GrabModeAsync,
+         GrabModeAsync, source.root, cursor, CurrentTime) != GrabSuccess))
+        fail("couldn't grab pointer\n");
+
     do {
         XEvent e;
         XNextEvent(source.dpy, &e);
@@ -230,6 +238,7 @@ main(int argc, char* argv[]) {
         }
     } while (!source.finished);
 
+    XFreeCursor(source.dpy, cursor);
     XDestroyWindow(source.dpy, source.win);
     XCloseDisplay(source.dpy);
     return EXIT_SUCCESS;
