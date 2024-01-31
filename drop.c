@@ -148,8 +148,8 @@ main(int argc, char* argv[]) {
     Cursor cursor = XCreateFontCursor(source.dpy, XC_X_cursor);
     if ((XGrabPointer
         (source.dpy, source.root, False,
-         ButtonMotionMask | ButtonPressMask | ButtonReleaseMask, GrabModeAsync,
-         GrabModeAsync, source.root, cursor, CurrentTime) != GrabSuccess))
+         ButtonPressMask, GrabModeAsync,
+         GrabModeAsync, None, cursor, CurrentTime) != GrabSuccess))
         fail("couldn't grab pointer\n");
 
     do {
