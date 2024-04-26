@@ -5,6 +5,7 @@
 #include <stdarg.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+#include <unistd.h>
 
 #define XDND_PROTOCOL_VERSION 5
 #define BUFFER_SIZE 1024
@@ -57,8 +58,12 @@ fail (const char* fmt, ...) {
 void // assumes XGrabPointer
 get_target_info() {
     int dxy; unsigned int dmask; Window droot;
-    XQueryPointer(source.dpy, source.root, &droot, &source.target_info.target,
-            &source.target_info.x_root, &source.target_info.y_root, &dxy, &dxy, &dmask);
+    if (XQueryPointer(source.dpy, source.root, &droot, &source.target_info.target,
+            &source.target_info.x_root, &source.target_info.y_root, &dxy, &dxy, &dmask) != True) {
+        fail("get_target_info(): XQueryPointer failed\n");
+    }
+
+    XUngrabPointer(source.dpy, CurrentTime);
 }
 
 int
@@ -68,8 +73,10 @@ is_target_xdnd_aware() {
     unsigned long dcount, dremaining;
     unsigned char* data = NULL;
     
-    XGetWindowProperty(source.dpy, source.target_info.target, source.atom.xdnd_aware,
-            0, BUFFER_SIZE, False, AnyPropertyType, &actual, &dformat, &dcount, &dremaining, &data);
+    if (XGetWindowProperty(source.dpy, source.target_info.target, source.atom.xdnd_aware,
+            0, BUFFER_SIZE, False, AnyPropertyType, &actual, &dformat, &dcount, &dremaining, &data) != Success) {
+        fail("is_target_xdnd_aware(): XGetWindowProperty failed\n");
+    }
 
     return (actual != None && data[0] <= XDND_PROTOCOL_VERSION);
 }
@@ -110,8 +117,6 @@ int
 main(int argc, char* argv[]) {
     if(argc <= 1)
         fail("usage: drop filename ...\n");
-    if(!(source.dpy = XOpenDisplay(NULL)))
-        fail("could not open display\n");
 
     source.file_paths_size = argc-1;
     source.file_paths = argv+1;
@@ -121,9 +126,16 @@ main(int argc, char* argv[]) {
         if(!source.file_paths[i])
             fail("invalid file path: \"%s\"\n", current);
     }
+
+    if(!(source.dpy = XOpenDisplay(NULL))) {
+        fail("main(): XOpenDisplay failed\n");
+    }
     source.scr = DefaultScreen(source.dpy);
     source.root = RootWindow(source.dpy, source.scr);
-    source.win = XCreateSimpleWindow(source.dpy, source.root, 0, 0, 10, 10, 0, 0, 0);
+    if(!(source.win = XCreateSimpleWindow(source.dpy, source.root, 0, 0, 10, 10, 0, 0, 0))) {
+        fail("main(): XCreateSimpleWindow failed\n");
+    }
+
     XSelectInput(source.dpy, source.win, ButtonPressMask|KeyPressMask);
 
     XGrabButton(source.dpy, Button1, None, source.root, False, ButtonPressMask,
@@ -151,19 +163,19 @@ main(int argc, char* argv[]) {
         switch (e.type) {
             case ButtonPress:
                 if(XGrabPointer(source.dpy, source.root, False,
-                            PointerMotionMask, GrabModeAsync, GrabModeAsync,
+                            None, GrabModeAsync, GrabModeAsync,
                             None, None, CurrentTime) != GrabSuccess)
-                    fail("could not grab pointer\n");
+                    fail("main(): XGrabPointer failed\n");
 
                 get_target_info();
 
                 if(source.target_info.target == None || !is_target_xdnd_aware()) {
-                    XUngrabPointer(source.dpy, CurrentTime);
-                    break;
+                    fail("window seems to not be supported by the xdnd protocol\n");
                 }
 
                 XSetSelectionOwner(source.dpy, source.atom.xdnd_selection,
                         source.win, CurrentTime);
+
                 // XdndEnter
                 XSendEvent(source.dpy, source.target_info.target, False, 0, &(XEvent){
                         .xclient.type = ClientMessage,
@@ -175,6 +187,7 @@ main(int argc, char* argv[]) {
                         .xclient.data.l[1] = XDND_PROTOCOL_VERSION << 24,
                         .xclient.data.l[2] = source.atom.data_type,
                         });
+
                 // XdndPosition
                 XSendEvent(source.dpy, source.target_info.target, False, 0, &(XEvent){
                         .xclient.type = ClientMessage,
@@ -188,14 +201,16 @@ main(int argc, char* argv[]) {
                         .xclient.data.l[4] = source.atom.xdnd_action_copy,
                         });
 
-                XUngrabPointer(source.dpy, CurrentTime);
                 break;
             case SelectionRequest:
                 send_selection_notify(&e.xselectionrequest);
                 break;
             case ClientMessage:
                 if(e.xclient.message_type == source.atom.xdnd_status) {
-                    if((e.xclient.data.l[1] & 0x1) != 1) {
+                    // let the app process because?
+                    usleep(25000);
+
+                    if(e.xclient.data.l[1] == 0) {
                         // XdndLeave
                         XSendEvent(source.dpy, source.target_info.target, False, 0, &(XEvent){
                                 .xclient.type = ClientMessage,
@@ -207,6 +222,7 @@ main(int argc, char* argv[]) {
                                 });
                         fail("target wont accept the drop\n");
                     }
+
                     // XdndDrop
                     XSendEvent(source.dpy, source.target_info.target, False, 0, &(XEvent){
                             .xclient.type = ClientMessage,
