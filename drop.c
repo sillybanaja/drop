@@ -83,15 +83,14 @@ is_target_xdnd_aware() {
 
 void
 send_selection_notify(XSelectionRequestEvent *xselectionrequest) {
-    // 1 is for nullbyte, +9 is for file:// and carrage return
-    // file:// is ilegal over file:/hostname/path. But fuck it we ball
+    // 1 is for nullbyte, +10 is for file:/// and carrage return
     size_t property_data_size = 1;
-    for(int i=0;i<source.file_paths_size;property_data_size+=strlen(source.file_paths[i])+9,i++);
+    for(int i=0;i<source.file_paths_size;property_data_size+=strlen(source.file_paths[i])+10,i++);
 
     char *property_data = calloc(property_data_size, 1);
     for(int i=0;i<source.file_paths_size;i++) {
         char path[BUFFER_SIZE];
-        snprintf(path, BUFFER_SIZE, "file://%s\r\n", source.file_paths[i]);
+        snprintf(path, BUFFER_SIZE, "file:///%s\r\n", source.file_paths[i]);
         strcat(property_data, path);
     }
     strcat(property_data, "\0");

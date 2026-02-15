@@ -2,7 +2,7 @@
 PREFIX=/usr/local
 
 all:
-	gcc -Wall -O0 -o drop drop.c -lX11
+	gcc -Wall -Os -o drop drop.c -lX11
 
 install: all
 	mkdir -p ${DESTDIR}${PREFIX}/bin
@@ -10,7 +10,7 @@ install: all
 	chmod 755 ${DESTDIR}${PREFIX}/bin/drop
 
 uninstall:
-	rm  -f ${DESTDIR}${PREFIX}/bin/drop
+	rm -f ${DESTDIR}${PREFIX}/bin/drop
 
 clean:
 	rm -f drop
