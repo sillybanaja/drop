@@ -1,8 +1,10 @@
+# Copyright (C) 2026 sillybanaja
 # See LICENSE file for license details.
+
 PREFIX=/usr/local
 
 all:
-	gcc -Wall -Os -o drop drop.c -lX11
+	gcc -Wall -Os -o drop drop.c -lX11 -lXi
 
 install: all
 	mkdir -p ${DESTDIR}${PREFIX}/bin
