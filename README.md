@@ -1,48 +1,28 @@
 ![dropshowcase](https://github.com/sillybanaja/drop/assets/132526605/ec6c36c4-08eb-48a3-ac4a-af749faa6093)
 
+
 ---
-### Install
-dependencies:
-- X11 (libx11)
-- XInput2(libxi)
-
-run:
-```sh
-$ git clone https://github.com/sillybanaja/drop.git
-$ cd drop
-$ sudo make install
-```
 ### context
-I wanted a simple way to drag files from the terminal into windows that force
-drag-and-drop without having to open a file browser or interact with a GUI.
-Existing solutions like [Dragon](https://github.com/mwh/dragon) by mwh are "bloated" (written in GTK) for what I
-need, plus Dragon required me to physically drag the files to the target application with
-a gui which is not ideal.
+drop is an alternative to [Dragon](https://github.com/mwh/dragon).. with Dragon you physically drag from a GTK window, whereas with drop, you run it, move your cursor to the desired target and.. click. written in C with x11 libraries only.
 
-I wrote drop in C using [Xlib](https://en.wikipedia.org/wiki/Xlib), which is lightweight and widely available on
-Unix-like systems. It takes a list of filenames as arguments and allows you to
-drop them onto any application that supports XDND, without requiring you to physically
-drag the files.
+### install
+dependencies: libx11, libxi
+```sh
+git clone https://github.com/sillybanaja/drop.git
+cd drop
+sudo make install
+```
 
 ### usage
-The basic usage is `drop filename ...`. Here's a example:
 ```sh
-$ drop ~/Downloads/*.jpg file.txt /usr/local/bin/*
+drop file.txt ~/Downloads/*.jpg    # multiple files
+ls *.png | drop                    # pipe support
 ```
-As you can see you can use [globbing patterns](https://en.wikipedia.org/wiki/Glob_(programming)) like "**~/Downloads/*.jpg**" for example when you pass in files.
+after running, move your cursor to the target window and left click to drop.. press **\<escape\>** to cancel without dropping.
 
-After executing the command, you can navigate to the destination window and left click where you want to drop. After
-you have dropped the files drop will exit. You can also press **\<escape\>** at any time to close the program.
+drop exits automatically once the files are accepted.
 
-### note
-At the moment it does not support xdg-desktop-portal mime aka flatpaks or xwayland.
-
-### contributions
-Pull requests and bug reports are welcome. Please keep in mind that this project
-is intended to remain small and focused on its core functionality. 
-
----
-
-If you found this tool helpful give it a star so others can find it.
-
+### notes
+- does not support xdg-desktop-portal (flatpak) or xwayland
+- pull requests and bug reports welcome, keep changes minimal
 

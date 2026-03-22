@@ -1,4 +1,4 @@
-# Copyright (C) 2026 sillybanaja
+# Copyright (c) 2026 sillybanaja
 # See LICENSE file for license details.
 
 PREFIX=/usr/local
@@ -17,4 +17,4 @@ uninstall:
 clean:
 	rm -f drop
 
-.PHONY: all clean install
+.PHONY: all clean install uninstall

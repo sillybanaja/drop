@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 sillybanaja
+ * Copyright (c) 2026 sillybanaja
  * See LICENSE file for license details.
  */
 
@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <X11/extensions/XInput2.h>
@@ -51,6 +52,7 @@ static void fail(const char*, ...);
 
 int
 swallow_badwindow(Display* dpy, XErrorEvent* e) {
+    // suppress BadWindow errors from sending xdnd events to destroyed windows
     return (e->error_code == BadWindow) ? 0 : 0;
 }
 
@@ -62,6 +64,7 @@ cleanup(void) {
     }
     free(source.data.string); free(source.data.urilist);
     for(int i=0;i<source.data.file_paths_size;i++) free(source.data.file_paths[i]);
+    free(source.data.file_paths);
 }
 
 void
@@ -78,18 +81,39 @@ fail(const char* fmt, ...) {
 
 int
 main(int argc, char* argv[]) {
-    if(argc <= 1)
-        fail("usage: drop filename ...\n");
+    int ai = 1;
+    for(; ai<argc && argv[ai][0] == '-'; ai++)
+        if(!strcmp(argv[ai], "-v")) {
+            printf("drop, Copyright (c) 2026 sillybanaja, GPL3 license\n");
+            exit(EXIT_SUCCESS);
+        }
+        else fail("unknown option '%s'\nusage: drop [-v] filename ...\n", argv[ai]);
 
-    // file handling
-    source.data.file_paths_size = argc-1;
-    source.data.file_paths = argv+1;
-    for(int i=0;i<argc-1;i++) {
-        const char* current = source.data.file_paths[i];
-        source.data.file_paths[i] = realpath(current, NULL);
-        if(!source.data.file_paths[i])
-            fail("invalid file path: \"%s\"\n", current);
+    if(!isatty(STDIN_FILENO) && argc > ai)
+        fail("invalid combination of piped input and arguments\n");
+    if(!isatty(STDIN_FILENO)) {
+        char *line = NULL;
+        size_t cap = 0, linesiz = 0;
+        ssize_t len;
+        while((len = getline(&line, &linesiz, stdin)) != -1) {
+            if(line[len-1] == '\n') line[len-1] = '\0';
+            if(source.data.file_paths_size >= cap)
+                source.data.file_paths = realloc(source.data.file_paths, (cap += 64) * sizeof(char*));
+            source.data.file_paths[source.data.file_paths_size++] = realpath(line, NULL);
+            if(!source.data.file_paths[source.data.file_paths_size-1])
+                fail("invalid file path: \'%s\'\n", line);
+        }
+        free(line);
+    } else {
+        source.data.file_paths = malloc((argc-ai) * sizeof(char*));
+        source.data.file_paths_size = argc-ai;
+        for(int i=0;i<source.data.file_paths_size;i++) {
+            source.data.file_paths[i] = realpath(argv[ai+i], NULL);
+            if(!source.data.file_paths[i])
+                fail("invalid file path: \'%s\'\n", argv[ai+i]);
+        }
     }
+    if(!source.data.file_paths_size) fail("usage: drop [-v] filename ...\n");
 
     size_t uri_size = 1, str_size = 1;
     for(int i=0;i<source.data.file_paths_size;i++) {
