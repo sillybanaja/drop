@@ -86,28 +86,12 @@ main(int argc, char* argv[]) {
     int ai = 1;
     for(; ai<argc && argv[ai][0] == '-'; ai++)
         if(!strcmp(argv[ai], "-v")) {
-            printf("drop 1.0.0, Copyright (c) 2026 sillybanaja, GPL3 license\n");
+            printf("drop 1.0.1, Copyright (c) 2026 sillybanaja, GPL3 license\n");
             exit(EXIT_SUCCESS);
         }
         else fail("unknown option '%s'\nusage: drop [-v] filename ...\n", argv[ai]);
 
-    if(!isatty(STDIN_FILENO) && argc > ai)
-        fail("invalid combination of piped input and arguments\n");
-    if(!isatty(STDIN_FILENO)) {
-        char *line = NULL;
-        size_t cap = 0, linesiz = 0;
-        ssize_t len;
-        while((len = getline(&line, &linesiz, stdin)) != -1) {
-            if(line[len-1] == '\n') line[len-1] = '\0';
-            if(source.data.file_paths_size >= cap)
-                if (!(source.data.file_paths = realloc(source.data.file_paths, (cap += 64) * sizeof(char*))))
-                    fail("realloc failed\n");
-            source.data.file_paths[source.data.file_paths_size++] = realpath(line, NULL);
-            if(!source.data.file_paths[source.data.file_paths_size-1])
-                fail("invalid file path: \'%s\'\n", line);
-        }
-        free(line);
-    } else {
+    if(argc > ai) {
         if(!(source.data.file_paths = malloc((argc-ai) * sizeof(char*))))
             fail("malloc failed\n");
         source.data.file_paths_size = argc-ai;
@@ -116,6 +100,21 @@ main(int argc, char* argv[]) {
             if(!source.data.file_paths[i])
                 fail("invalid file path: \'%s\'\n", argv[ai+i]);
         }
+    }
+    else if(!isatty(STDIN_FILENO)) {
+        char *line = NULL;
+        size_t cap = 0, linesiz = 0;
+        ssize_t len;
+        while((len = getline(&line, &linesiz, stdin)) != -1) {
+            if(line[len-1] == '\n') line[len-1] = '\0';
+            if(source.data.file_paths_size >= cap)
+                if(!(source.data.file_paths = realloc(source.data.file_paths, (cap += 64) * sizeof(char*))))
+                    fail("realloc failed\n");
+            source.data.file_paths[source.data.file_paths_size++] = realpath(line, NULL);
+            if(!source.data.file_paths[source.data.file_paths_size-1])
+                fail("invalid file path: \'%s\'\n", line);
+        }
+        free(line);
     }
     if(!source.data.file_paths_size) fail("usage: drop [-v] filename ...\n");
 
