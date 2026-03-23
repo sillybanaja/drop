@@ -4,7 +4,7 @@
 PREFIX=/usr/local
 
 all:
-	gcc -Wall -Os -o drop drop.c -lX11 -lXi
+	${CC} -Wall -Os -o drop drop.c -lX11 -lXi
 
 install: all
 	mkdir -p ${DESTDIR}${PREFIX}/bin

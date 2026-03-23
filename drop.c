@@ -53,7 +53,9 @@ static void fail(const char*, ...);
 int
 swallow_badwindow(Display* dpy, XErrorEvent* e) {
     // suppress BadWindow errors from sending xdnd events to destroyed windows
-    return (e->error_code == BadWindow) ? 0 : 0;
+    char buf[256];
+    XGetErrorText(source.dpy, e->error_code, buf, sizeof(buf));
+    return (e->error_code == BadWindow) ? 0 : (fprintf(stderr, "x11 error: %s\n", buf), 0);
 }
 
 void
@@ -84,7 +86,7 @@ main(int argc, char* argv[]) {
     int ai = 1;
     for(; ai<argc && argv[ai][0] == '-'; ai++)
         if(!strcmp(argv[ai], "-v")) {
-            printf("drop, Copyright (c) 2026 sillybanaja, GPL3 license\n");
+            printf("drop 1.0.0, Copyright (c) 2026 sillybanaja, GPL3 license\n");
             exit(EXIT_SUCCESS);
         }
         else fail("unknown option '%s'\nusage: drop [-v] filename ...\n", argv[ai]);
@@ -98,14 +100,16 @@ main(int argc, char* argv[]) {
         while((len = getline(&line, &linesiz, stdin)) != -1) {
             if(line[len-1] == '\n') line[len-1] = '\0';
             if(source.data.file_paths_size >= cap)
-                source.data.file_paths = realloc(source.data.file_paths, (cap += 64) * sizeof(char*));
+                if (!(source.data.file_paths = realloc(source.data.file_paths, (cap += 64) * sizeof(char*))))
+                    fail("realloc failed\n");
             source.data.file_paths[source.data.file_paths_size++] = realpath(line, NULL);
             if(!source.data.file_paths[source.data.file_paths_size-1])
                 fail("invalid file path: \'%s\'\n", line);
         }
         free(line);
     } else {
-        source.data.file_paths = malloc((argc-ai) * sizeof(char*));
+        if(!(source.data.file_paths = malloc((argc-ai) * sizeof(char*))))
+            fail("malloc failed\n");
         source.data.file_paths_size = argc-ai;
         for(int i=0;i<source.data.file_paths_size;i++) {
             source.data.file_paths[i] = realpath(argv[ai+i], NULL);
@@ -212,7 +216,7 @@ main(int argc, char* argv[]) {
                 unsigned char* d;
                 if(XGetWindowProperty(source.dpy, source.target, source.atom.xdnd_aware,
                             0, 1, False, AnyPropertyType, &(Atom){None}, &(int){0},
-                            &(unsigned long){0}, &(unsigned long){0}, &d) == Success && d) {
+                            &(unsigned long){0}, &(unsigned long){0}, &d) == Success && d && *d >= 3 /*min xdnd version*/) {
                     XFree(d);
                     XSendEvent(source.dpy, source.target, False, 0, &(XEvent){ // xdndenter
                             .xclient.type = ClientMessage,
@@ -318,7 +322,12 @@ main(int argc, char* argv[]) {
 
                 XUngrabKey(source.dpy, XKeysymToKeycode(source.dpy, XK_Escape), AnyModifier, source.root);
                 XUngrabButton(source.dpy, Button1, AnyModifier, source.root);
-                XISelectEvents(source.dpy, source.root, &(XIEventMask){ .deviceid = XIAllMasterDevices }, 0);
+                unsigned char empty[XIMaskLen(XI_LASTEVENT)] = {0};
+                XISelectEvents(source.dpy, source.root, &(XIEventMask){
+                        .deviceid = XIAllMasterDevices,
+                        .mask_len = sizeof(empty),
+                        .mask = empty,
+                        }, 1);
                 XFlush(source.dpy);
             }
             else if(source.x_root == -1) fail("XI_RawMotion not triggered before drop\n");
