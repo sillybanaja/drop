@@ -1,7 +1,7 @@
 ![dropshowcase](https://github.com/sillybanaja/drop/assets/132526605/ec6c36c4-08eb-48a3-ac4a-af749faa6093)
 
 ## context
-drop is an alternative to [Dragon](https://github.com/mwh/dragon).. with Dragon you physically drag from a GTK window, whereas with drop, you run it, move your cursor to the desired target and.. click. written in C with x11 libraries only.
+drop is a x11 drag-and-drop source.. unlike [Dragon](https://github.com/mwh/dragon) which opens a GTK window to drag from, drop just lets you click on the desired window to drop, straight from the cli.. no dependencies outside of standard x11 libraries.
 
 ## install
 *dependencies: libx11, libxi*
