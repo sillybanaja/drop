@@ -54,7 +54,7 @@ int
 swallow_badwindow(Display* dpy, XErrorEvent* e) {
     // suppress BadWindow errors from sending xdnd events to destroyed windows
     char buf[256];
-    XGetErrorText(source.dpy, e->error_code, buf, sizeof(buf));
+    XGetErrorText(source.dpy, e->error_code, buf, sizeof (buf));
     return (e->error_code == BadWindow) ? 0 : (fprintf(stderr, "x11 error: %s\n", buf), 0);
 }
 
@@ -92,7 +92,7 @@ main(int argc, char* argv[]) {
         else fail("unknown option '%s'\nusage: drop [-v] filename ...\n", argv[ai]);
 
     if(argc > ai) {
-        if(!(source.data.file_paths = malloc((argc-ai) * sizeof(char*))))
+        if(!(source.data.file_paths = malloc((argc-ai) * sizeof (char*))))
             fail("malloc failed\n");
         source.data.file_paths_size = argc-ai;
         for(int i=0;i<source.data.file_paths_size;i++) {
@@ -108,7 +108,7 @@ main(int argc, char* argv[]) {
         while((len = getline(&line, &linesiz, stdin)) != -1) {
             if(line[len-1] == '\n') line[len-1] = '\0';
             if(source.data.file_paths_size >= cap)
-                if(!(source.data.file_paths = realloc(source.data.file_paths, (cap += 64) * sizeof(char*))))
+                if(!(source.data.file_paths = realloc(source.data.file_paths, (cap += 64) * sizeof (char*))))
                     fail("realloc failed\n");
             source.data.file_paths[source.data.file_paths_size++] = realpath(line, NULL);
             if(!source.data.file_paths[source.data.file_paths_size-1])
@@ -126,14 +126,16 @@ main(int argc, char* argv[]) {
         if(i > 0) str_size += 1;    // <space>
     }
 
-    source.data.urilist = malloc(uri_size);
+    if(!(source.data.urilist = malloc(uri_size)))
+        fail("malloc failed\n");
     char* pu = source.data.urilist;
     for(int i=0;i<source.data.file_paths_size;i++)
         pu += snprintf(pu, uri_size - (pu - source.data.urilist),
                 "file://%s\r\n", source.data.file_paths[i]);
     *pu = '\0';
 
-    source.data.string = malloc(str_size);
+    if(!(source.data.string = malloc(str_size)))
+        fail("malloc failed\n");
     char* ps = source.data.string;
     for(int i=0;i<source.data.file_paths_size;i++) {
         if(i > 0) *ps++ = ' ';
@@ -175,7 +177,7 @@ main(int argc, char* argv[]) {
     XISetMask(mask_data, XI_RawMotion);
     XISelectEvents(source.dpy, source.root, &(XIEventMask){
             .deviceid = XIAllMasterDevices,
-            .mask_len = sizeof(mask_data),
+            .mask_len = sizeof (mask_data),
             .mask = mask_data,
             }, 1);
     XGrabKey(source.dpy, XKeysymToKeycode(source.dpy, XK_Escape), 0,
@@ -324,7 +326,7 @@ main(int argc, char* argv[]) {
                 unsigned char empty[XIMaskLen(XI_LASTEVENT)] = {0};
                 XISelectEvents(source.dpy, source.root, &(XIEventMask){
                         .deviceid = XIAllMasterDevices,
-                        .mask_len = sizeof(empty),
+                        .mask_len = sizeof (empty),
                         .mask = empty,
                         }, 1);
                 XFlush(source.dpy);
