@@ -339,5 +339,5 @@ main(int argc, char* argv[]) {
     } while(!source.finished);
 
     cleanup();
-    return EXIT_SUCCESS;
+    return (EXIT_SUCCESS);
 }
